@@ -20,7 +20,7 @@ void signalHandler(int signum) {
 
 int main() {
     std::signal(SIGINT, signalHandler);
-    std::cout << "🚀 Initializing Discord SDK...\n";
+    std::cout << "Initializing Discord SDK...\n";
 
     // Create our Discord Client
     auto client = std::make_shared<discordpp::Client>();
@@ -30,20 +30,29 @@ int main() {
         std::cout << "[" << EnumToString(severity) << "] " << message << std::endl;
     }, discordpp::LoggingSeverity::Info);
 
+    // Associate client with our Discord application (required before any SDK calls)
+    client->SetApplicationId(APPLICATION_ID);
+
     // Set up status callback to monitor client connection
     client->SetStatusChangedCallback([client](discordpp::Client::Status status, discordpp::Client::Error error, int32_t errorDetail) {
-        std::cout << "🔄 Status changed: " << discordpp::Client::StatusToString(status) << std::endl;
+        std::cout << "Status changed: " << discordpp::Client::StatusToString(status) << std::endl;
 
         if (status == discordpp::Client::Status::Ready) {
-            std::cout << "✅ Client is ready! You can now call SDK functions.\n";
-            
+            std::cout << "Client is ready.\n";
+
             discordpp::Activity activity;
+            activity.SetName("Beat Saber");
             activity.SetType(discordpp::ActivityTypes::Playing);
             activity.SetState("In Competitive Match");
             activity.SetDetails("Rank: Diamond II");
+            client->UpdateRichPresence(activity, [](auto result) {
+                if (!result.Successful()) {
+                    std::cerr << "UpdateRichPresence failed: " << result.Error() << std::endl;
+                }
+            });
 
         } else if (error != discordpp::Client::Error::None) {
-            std::cerr << "❌ Connection Error: " << discordpp::Client::ErrorToString(error) << " - Details: " << errorDetail << std::endl;
+            std::cerr << "Connection error: " << discordpp::Client::ErrorToString(error) << " (detail: " << errorDetail << ")" << std::endl;
         }
     });
 
@@ -59,10 +68,10 @@ int main() {
     // Begin authentication process
     client->Authorize(args, [client, codeVerifier](auto result, auto code, auto redirectUri) {
         if (!result.Successful()) {
-            std::cerr << "❌ Authentication Error: " << result.Error() << std::endl;
+            std::cerr << "Authorize failed: " << result.Error() << std::endl;
             return;
         } else {
-            std::cout << "✅ Authorization successful! Getting access token...\n";
+            std::cout << "Authorization successful. Getting access token...\n";
 
             // Exchange auth code for access token
             client->GetToken(APPLICATION_ID, code, codeVerifier.Verifier(), redirectUri,
@@ -71,12 +80,16 @@ int main() {
                 std::string refreshToken,
                 discordpp::AuthorizationTokenType tokenType,
                 int32_t expiresIn,
-            std::string scope) {
-                std::cout << "🔓 Access token received! Establishing connection...\n";
+                std::string scope) {
+                if (!result.Successful()) {
+                    std::cerr << "GetToken failed: " << result.Error() << std::endl;
+                    return;
+                }
+                std::cout << "Access token received. Establishing connection...\n";
                 // Next Step: Update the token and connect
-                client->UpdateToken(discordpp::AuthorizationTokenType::Bearer,  accessToken, [client](discordpp::ClientResult result) {
+                client->UpdateToken(discordpp::AuthorizationTokenType::Bearer, accessToken, [client](discordpp::ClientResult result) {
                     if(result.Successful()) {
-                        std::cout << "🔑 Token updated, connecting to Discord...\n";
+                        std::cout << "Token updated. Connecting to Discord...\n";
                         client->Connect();
                     }
                 });
