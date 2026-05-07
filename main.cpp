@@ -336,7 +336,7 @@ int main(int argc, char* argv[]) {
     // Set up logging callback
     client->AddLogCallback([](auto message, auto severity) {
         std::cout << "[" << EnumToString(severity) << "] " << message << std::endl;
-    }, discordpp::LoggingSeverity::Info);
+    }, discordpp::LoggingSeverity::None);
 
     // Set up status callback to monitor client connection
     client->SetStatusChangedCallback([client](discordpp::Client::Status status, discordpp::Client::Error error, int32_t errorDetail) {
