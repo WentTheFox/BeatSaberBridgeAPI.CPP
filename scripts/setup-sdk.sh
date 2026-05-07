@@ -28,7 +28,7 @@ echo "📥 Downloading Discord SDK from GitHub release..."
 
 GITHUB_USER="RainzDev"
 GITHUB_REPO="BeatSaberBridgeAPI.CPP"
-ASSET_NAME="discord-sdk.tar.gz"
+ASSET_NAME="discord-sdk.tar.xz"
 
 # Get the latest release download URL
 DOWNLOAD_URL=$(curl -s "https://api.github.com/repos/$GITHUB_USER/$GITHUB_REPO/releases/tag/SDK" | grep -o "\"browser_download_url\": \"[^\"]*$ASSET_NAME" | cut -d'"' -f4)
