@@ -31,7 +31,7 @@ GITHUB_REPO="BeatSaberBridgeAPI.CPP"
 ASSET_NAME="discord-sdk.tar.xz"
 
 # Get the latest release download URL
-DOWNLOAD_URL=$(curl -s "https://api.github.com/repos/$GITHUB_USER/$GITHUB_REPO/releases/tag/SDK" | grep -o "\"browser_download_url\": \"[^\"]*$ASSET_NAME" | cut -d'"' -f4)
+DOWNLOAD_URL=$(curl -s "https://github.com/RainzDev/BeatSaberBridgeAPI.CPP/releases/download/SDK/discord-sdk.tar.xz")
 
 if [ -z "$DOWNLOAD_URL" ]; then
     echo "❌ Failed to find Discord SDK in GitHub releases"
@@ -40,12 +40,12 @@ if [ -z "$DOWNLOAD_URL" ]; then
 fi
 
 echo "Downloading from: $DOWNLOAD_URL"
-wget -O /tmp/discord-sdk.tar.gz "$DOWNLOAD_URL"
+wget -O /tmp/discord-sdk.tar.xz "$DOWNLOAD_URL"
 
 # Extract SDK
 echo "📦 Extracting SDK..."
-tar -xzf /tmp/discord-sdk.tar.gz -C lib/
-rm /tmp/discord-sdk.tar.gz
+tar -xJf /tmp/discord-sdk.tar.xz -C lib/
+rm /tmp/discord-sdk.tar.xz
 
 echo "✓ Discord SDK setup complete"
 exit 0
