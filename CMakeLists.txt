@@ -4,7 +4,30 @@ project(BeatSaberBridgeAPI.CPP)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+# Fetch external libraries
+include(FetchContent)
+
+# Fetch cpp-httplib
+FetchContent_Declare(cpp_httplib
+  GIT_REPOSITORY https://github.com/yhirose/cpp-httplib.git
+  GIT_TAG master
+)
+
+# Fetch nlohmann/json
+FetchContent_Declare(json
+  GIT_REPOSITORY https://github.com/nlohmann/json.git
+  GIT_TAG master
+)
+
+FetchContent_MakeAvailable(cpp_httplib json)
+
 add_executable(BeatSaberBridgeAPI.CPP main.cpp)
+
+# Link the external libraries
+target_link_libraries(BeatSaberBridgeAPI.CPP PRIVATE nlohmann_json::nlohmann_json)
+
+# Add cpp-httplib include directory
+target_include_directories(BeatSaberBridgeAPI.CPP PRIVATE ${cpp_httplib_SOURCE_DIR})
 
 # Define some handy Social SDK variables
 set(DISCORD_SDK_ROOT "${CMAKE_SOURCE_DIR}/lib/discord_social_sdk")
