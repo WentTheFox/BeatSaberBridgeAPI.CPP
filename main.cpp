@@ -264,7 +264,7 @@ void rpcWorker(std::shared_ptr<discordpp::Client> client) {
                     party.SetMaxSize(4);
 
                     discordpp::ActivitySecrets secrets;
-                    secrets.SetJoin(data.metadata["lobbyCode"]);
+                    secrets.SetJoin("bsrpc://MultiplayerCore/BeatTogether/" + data.metadata["lobbyCode"]);
 
                     activity.SetSecrets(secrets);
                     activity.SetParty(party);
