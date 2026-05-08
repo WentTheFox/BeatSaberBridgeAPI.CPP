@@ -22,7 +22,7 @@
 #include <httplib.h>
 #include <nlohmann/json.hpp>
 
-uint64_t applicationId = 1492702030958170272;
+uint64_t applicationId = 1028340906740420711;
 
 // 15 minutes in seconds
 const int INACTIVITY_TIMEOUT = 900;
