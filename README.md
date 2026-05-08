@@ -118,10 +118,11 @@ cmake -S . -B build -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release
 cmake --build build
 ```
 
-If using CLion's bundled toolchain, specify the compiler paths explicitly:
+If using CLion's bundled toolchain, add its MinGW `bin` to `PATH` first so the assembler and linker are found, then specify the compiler paths explicitly:
 
 ```bat
 set CLION=%LOCALAPPDATA%\Programs\CLion\bin
+set PATH=%CLION%\mingw\bin;%PATH%
 cmake -S . -B build ^
   -G "Ninja" ^
   -DCMAKE_MAKE_PROGRAM="%CLION%\ninja\win\x64\ninja.exe" ^
