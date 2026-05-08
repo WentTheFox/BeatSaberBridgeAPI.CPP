@@ -29,32 +29,25 @@ permissions:
 jobs:
   setup-sdk:
     runs-on: ubuntu-latest
-    outputs:
-      sdk-cache-key: ${{ steps.sdk-key.outputs.key }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Read SDK cache key
-        id: sdk-key
-        run: echo "key=discord-sdk-$(tr -d '[:space:]' < scripts/sdk-sha256.txt)" >> $GITHUB_OUTPUT
-
-      - name: Cache Discord SDK
-        id: cache-sdk
-        uses: actions/cache@v4
-        with:
-          path: lib/discord_social_sdk
-          key: ${{ steps.sdk-key.outputs.key }}
-
       - name: Set up SDK
-        if: steps.cache-sdk.outputs.cache-hit != 'true'
         shell: bash
         env:
           SDK_DOWNLOAD_URL: ${{ vars.SDK_DOWNLOAD_URL }}
           SDK_DOWNLOAD_TOKEN: ${{ secrets.SDK_DOWNLOAD_TOKEN }}
         run: |
           bash scripts/setup-sdk.sh
+
+      - name: Upload SDK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: discord-sdk
+          path: lib/discord_social_sdk/
+          retention-days: 1
 
   build:
     needs: setup-sdk
@@ -68,11 +61,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Restore Discord SDK
-        uses: actions/cache/restore@v4
+      - name: Download SDK artifact
+        uses: actions/download-artifact@v4
         with:
-          path: lib/discord_social_sdk
-          key: ${{ needs.setup-sdk.outputs.sdk-cache-key }}
+          name: discord-sdk
+          path: lib/discord_social_sdk/
 
       - name: Set up CMake
         uses: lukka/get-cmake@latest
