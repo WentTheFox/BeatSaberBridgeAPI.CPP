@@ -59,21 +59,31 @@ jobs:
         run: |
           bash scripts/setup-sdk.sh
 
+      - name: Cache build artifact
+        id: cache-build
+        uses: actions/cache@v4
+        with:
+          path: BeatSaberBridgeAPI.CPP-*.zip
+          key: build-${{ runner.os }}-${{ github.sha }}
+
       - name: Set up CMake
+        if: steps.cache-build.outputs.cache-hit != 'true'
         uses: lukka/get-cmake@latest
 
       - name: Configure CMake
+        if: steps.cache-build.outputs.cache-hit != 'true'
         run: |
           mkdir build && cd build
           cmake ..
 
       - name: Build
+        if: steps.cache-build.outputs.cache-hit != 'true'
         run: |
           cd build
           cmake --build . --config Release
 
       - name: Prepare Windows build
-        if: runner.os == 'Windows'
+        if: runner.os == 'Windows' && steps.cache-build.outputs.cache-hit != 'true'
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Path dist
@@ -82,7 +92,7 @@ jobs:
           Compress-Archive -Path dist/* -DestinationPath BeatSaberBridgeAPI.CPP-windows.zip
 
       - name: Prepare Linux build
-        if: runner.os == 'Linux'
+        if: runner.os == 'Linux' && steps.cache-build.outputs.cache-hit != 'true'
         shell: bash
         run: |
           mkdir dist
@@ -91,7 +101,7 @@ jobs:
           cd dist && zip ../BeatSaberBridgeAPI.CPP-linux.zip *
 
       - name: Prepare macOS build
-        if: runner.os == 'macOS'
+        if: runner.os == 'macOS' && steps.cache-build.outputs.cache-hit != 'true'
         shell: bash
         run: |
           mkdir dist
