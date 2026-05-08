@@ -59,19 +59,19 @@ jobs:
         if: runner.os == 'Windows'
         shell: bash
         run: |
-          cp build/Release/BS-LocalServer.exe BS-LocalServer-windows.exe
+          cp build/Release/BeatSaberBridgeAPI.CPP.exe BeatSaberBridgeAPI.CPP-windows.exe
 
       - name: Prepare Linux binary
         if: runner.os == 'Linux'
         shell: bash
         run: |
-          cp build/BS-LocalServer BS-LocalServer-linux
+          cp build/BeatSaberBridgeAPI.CPP BeatSaberBridgeAPI.CPP-linux
 
       - name: Prepare macOS binary
         if: runner.os == 'macOS'
         shell: bash
         run: |
-          cp build/BS-LocalServer MyBS-LocalServerProgram-macos
+          cp build/BeatSaberBridgeAPI.CPP BeatSaberBridgeAPI.CPP-macos
 
       #
       # Upload binaries
@@ -81,21 +81,21 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: windows-binary
-          path: BS-LocalServer-windows.exe
+          path: BeatSaberBridgeAPI.CPP-windows.exe
 
       - name: Upload Linux binary
         if: runner.os == 'Linux'
         uses: actions/upload-artifact@v4
         with:
           name: linux-binary
-          path: BS-LocalServer-linux
+          path: BeatSaberBridgeAPI.CPP-linux
 
       - name: Upload macOS binary
         if: runner.os == 'macOS'
         uses: actions/upload-artifact@v4
         with:
           name: macos-binary
-          path: BS-LocalServer-macos
+          path: BeatSaberBridgeAPI.CPP-macos
 
   release:
     if: github.event_name == 'workflow_dispatch'
@@ -133,9 +133,9 @@ jobs:
           body: ${{ github.event.inputs.release_body }}
 
           files: |
-            binaries/BS-LocalServer-windows.exe
-            binaries/BS-LocalServer-linux
-            binaries/BS-LocalServer-macos
+            binaries/BeatSaberBridgeAPI.CPP-windows.exe
+            binaries/BeatSaberBridgeAPI.CPP-linux
+            binaries/BeatSaberBridgeAPI.CPP-macos
 
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
