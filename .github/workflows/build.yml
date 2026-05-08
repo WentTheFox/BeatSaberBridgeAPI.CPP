@@ -54,27 +54,24 @@ jobs:
         run: |
           cmake --build build --config Release
 
-      #
-      # Copy the built executable
-      # Replace "MyProgram" with your actual executable name
-      #
+          
       - name: Prepare Windows binary
         if: runner.os == 'Windows'
         shell: bash
         run: |
-          cp build/Release/MyProgram.exe MyProgram-windows.exe
+          cp build/Release/BS-LocalServer.exe BS-LocalServer-windows.exe
 
       - name: Prepare Linux binary
         if: runner.os == 'Linux'
         shell: bash
         run: |
-          cp build/MyProgram MyProgram-linux
+          cp build/BS-LocalServer BS-LocalServer-linux
 
       - name: Prepare macOS binary
         if: runner.os == 'macOS'
         shell: bash
         run: |
-          cp build/MyProgram MyProgram-macos
+          cp build/BS-LocalServer MyBS-LocalServerProgram-macos
 
       #
       # Upload binaries
@@ -84,21 +81,21 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: windows-binary
-          path: MyProgram-windows.exe
+          path: BS-LocalServer-windows.exe
 
       - name: Upload Linux binary
         if: runner.os == 'Linux'
         uses: actions/upload-artifact@v4
         with:
           name: linux-binary
-          path: MyProgram-linux
+          path: BS-LocalServer-linux
 
       - name: Upload macOS binary
         if: runner.os == 'macOS'
         uses: actions/upload-artifact@v4
         with:
           name: macos-binary
-          path: MyProgram-macos
+          path: BS-LocalServer-macos
 
   release:
     if: github.event_name == 'workflow_dispatch'
@@ -136,9 +133,9 @@ jobs:
           body: ${{ github.event.inputs.release_body }}
 
           files: |
-            binaries/MyProgram-windows.exe
-            binaries/MyProgram-linux
-            binaries/MyProgram-macos
+            binaries/BS-LocalServer-windows.exe
+            binaries/BS-LocalServer-linux
+            binaries/BS-LocalServer-macos
 
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

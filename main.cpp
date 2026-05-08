@@ -241,7 +241,6 @@ void rpcWorker(std::shared_ptr<discordpp::Client> client) {
                     client->UpdateRichPresence(activity, [](auto result) {});
                 }
                 else if (data.type == "LobbyPlayerOnDisconnect" || data.type == "LobbyPlayerOnConnect") {
-                    std::cout << "Lobby Code: " + data.metadata["lobbyCode"] << std::endl;
 
                     if (partyId.empty()) {
                         // Generate a simple UUID (simplified)
