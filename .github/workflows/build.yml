@@ -38,8 +38,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Cache Discord SDK
+        id: cache-sdk
+        uses: actions/cache@v4
+        with:
+          path: lib/discord_social_sdk
+          key: discord-sdk-${{ hashFiles('scripts/sdk-sha256.txt') }}
+
       - name: Set up SDK
+        if: steps.cache-sdk.outputs.cache-hit != 'true'
         shell: bash
+        env:
+          SDK_DOWNLOAD_URL: ${{ secrets.SDK_DOWNLOAD_URL }}
+          SDK_DOWNLOAD_TOKEN: ${{ secrets.SDK_DOWNLOAD_TOKEN }}
         run: |
           bash scripts/setup-sdk.sh
 
@@ -54,14 +65,13 @@ jobs:
       - name: Build
         run: |
           cd build
-          cmake --build .
+          cmake --build . --config Release
 
-          
-      #- name: Prepare Windows binary
-      #  if: runner.os == 'Windows'
-      #  shell: bash
-      #  run: |
-      #    cp build/BeatSaberBridgeAPI.CPP.exe BeatSaberBridgeAPI.CPP-windows.exe
+      - name: Prepare Windows binary
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          cp build/Release/BeatSaberBridgeAPI.CPP.exe BeatSaberBridgeAPI.CPP-windows.exe
 
       - name: Prepare Linux binary
         if: runner.os == 'Linux'
@@ -75,15 +85,12 @@ jobs:
         run: |
           cp build/BeatSaberBridgeAPI.CPP BeatSaberBridgeAPI.CPP-macos
 
-      #
-      # Upload binaries
-      #
-      #- name: Upload Windows binary
-      #  if: runner.os == 'Windows'
-      #  uses: actions/upload-artifact@v4
-      #  with:
-      #    name: windows-binary
-      #    path: BeatSaberBridgeAPI.CPP-windows.exe
+      - name: Upload Windows binary
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-binary
+          path: BeatSaberBridgeAPI.CPP-windows.exe
 
       - name: Upload Linux binary
         if: runner.os == 'Linux'
@@ -105,11 +112,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      #- name: Download Windows binary
-      #  uses: actions/download-artifact@v4
-      #  with:
-      #    name: windows-binary
-      #    path: binaries
+      - name: Download Windows binary
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-binary
+          path: binaries
 
       - name: Download Linux binary
         uses: actions/download-artifact@v4
@@ -135,6 +142,7 @@ jobs:
           body: ${{ github.event.inputs.release_body }}
 
           files: |
+            binaries/BeatSaberBridgeAPI.CPP-windows.exe
             binaries/BeatSaberBridgeAPI.CPP-linux
             binaries/BeatSaberBridgeAPI.CPP-macos
 
