@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Setup Discord SDK for build
-# This script downloads the Discord Social SDK from GitHub releases
+# Downloads the Discord Social SDK from the private release using a token.
 
 set -euo pipefail
 
@@ -16,20 +16,28 @@ TMP_DIR="$(mktemp -d)"
 SDK_SHA256=$(tr -d '[:space:]' < "$(dirname "$0")/sdk-sha256.txt")
 
 ASSET_NAME="DiscordSocialSdk-1.9.15332.zip"
-DOWNLOAD_URL="${SDK_DOWNLOAD_URL:?SDK_DOWNLOAD_URL secret is not set}"
+DOWNLOAD_URL="${SDK_DOWNLOAD_URL:?SDK_DOWNLOAD_URL is not set}"
+DOWNLOAD_TOKEN="${SDK_DOWNLOAD_TOKEN:?SDK_DOWNLOAD_TOKEN is not set}"
 
 download_file() {
     local dest="$1"
     local url="$2"
+    local token="$3"
 
     if command -v curl >/dev/null 2>&1; then
-        curl -L --fail -o "$dest" "$url"
+        curl -L --fail \
+            -H "Authorization: Bearer $token" \
+            -H "Accept: application/octet-stream" \
+            -o "$dest" "$url"
     elif command -v wget >/dev/null 2>&1; then
-        wget -O "$dest" "$url"
+        wget \
+            --header="Authorization: Bearer $token" \
+            --header="Accept: application/octet-stream" \
+            -O "$dest" "$url"
     elif command -v pwsh >/dev/null 2>&1; then
-        pwsh -Command "Invoke-WebRequest -Uri '$url' -OutFile '$dest' -UseBasicParsing"
+        pwsh -Command "Invoke-WebRequest -Uri '$url' -OutFile '$dest' -UseBasicParsing -Headers @{'Authorization'='Bearer $token';'Accept'='application/octet-stream'}"
     elif command -v powershell >/dev/null 2>&1; then
-        powershell -Command "Invoke-WebRequest -Uri '$url' -OutFile '$dest' -UseBasicParsing"
+        powershell -Command "Invoke-WebRequest -Uri '$url' -OutFile '$dest' -UseBasicParsing -Headers @{'Authorization'='Bearer $token';'Accept'='application/octet-stream'}"
     else
         echo "❌ No download tool available (curl, wget, or powershell required)"
         exit 1
@@ -73,7 +81,7 @@ mkdir -p "$DEBUG_LIB_DIR"
 
 echo "📥 Downloading Discord SDK..."
 FILE_PATH="$TMP_DIR/$ASSET_NAME"
-download_file "$FILE_PATH" "$DOWNLOAD_URL"
+download_file "$FILE_PATH" "$DOWNLOAD_URL" "$DOWNLOAD_TOKEN"
 
 echo "🔍 Verifying integrity..."
 verify_sha256 "$FILE_PATH" "$SDK_SHA256"

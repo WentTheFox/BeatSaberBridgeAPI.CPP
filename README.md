@@ -73,7 +73,41 @@ If an asset key is missing the bridge will log a warning and automatically retry
 
 Skip this step entirely if you are happy using the default application.
 
-## 3. Build
+## 3. CI setup — SDK distribution for forks
+
+The Discord Social SDK is not publicly redistributable, so CI cannot download it from a public URL. The build workflow in this repository pulls the SDK from a private GitHub repository using a personal access token. If you fork this project and want CI to work, you need to replicate this setup.
+
+### How it works
+
+`scripts/setup-sdk.sh` reads two environment variables that are injected from GitHub Actions secrets:
+
+| Secret | Description |
+|--------|-------------|
+| `SDK_DOWNLOAD_URL` | Direct download URL to the SDK zip in your private release |
+| `SDK_DOWNLOAD_TOKEN` | A GitHub PAT with read access to that private repository |
+
+The script downloads the zip, verifies its SHA-256 against the hash in `scripts/sdk-sha256.txt`, then extracts it. The extracted SDK is cached in CI keyed by that hash, so the download only happens when the SDK version changes.
+
+### Steps to replicate
+
+1. **Create a private GitHub repository** (e.g. `you/discord-sdk-assets`).
+
+2. **Create a release** (e.g. tag `v1.9.15332`) and upload the SDK zip obtained from the Discord Developer Portal as a release asset. The filename must match `ASSET_NAME` in `setup-sdk.sh`.
+
+3. **Create a fine-grained personal access token:**
+   - Go to **GitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens**
+   - Set repository access to **only** the private assets repo
+   - Grant **Contents: Read-only** — nothing else is needed
+
+4. **Add secrets to your fork** under **Settings → Secrets and variables → Actions:**
+   - `SDK_DOWNLOAD_URL` — the release asset download URL, e.g. `https://github.com/you/discord-sdk-assets/releases/download/v1.9.15332/DiscordSocialSdk-1.9.15332.zip`
+   - `SDK_DOWNLOAD_TOKEN` — the PAT from the previous step
+
+5. **Update `scripts/sdk-sha256.txt`** if you are using a different SDK version. Compute the SHA-256 of your zip:
+   - Linux / macOS: `sha256sum DiscordSocialSdk-*.zip`
+   - Windows: `Get-FileHash DiscordSocialSdk-*.zip -Algorithm SHA256`
+
+## 4. Build
 
 All platforms use the same CMake flow. Run from the repository root.
 

@@ -50,6 +50,7 @@ jobs:
         shell: bash
         env:
           SDK_DOWNLOAD_URL: ${{ secrets.SDK_DOWNLOAD_URL }}
+          SDK_DOWNLOAD_TOKEN: ${{ secrets.SDK_DOWNLOAD_TOKEN }}
         run: |
           bash scripts/setup-sdk.sh
 
