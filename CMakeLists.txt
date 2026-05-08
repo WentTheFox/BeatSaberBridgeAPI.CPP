@@ -23,6 +23,11 @@ FetchContent_MakeAvailable(cpp_httplib json)
 
 add_executable(BeatSaberBridgeAPI.CPP main.cpp)
 
+set_target_properties(BeatSaberBridgeAPI.CPP PROPERTIES
+    BUILD_RPATH "$ORIGIN"
+    INSTALL_RPATH "$ORIGIN"
+)
+
 # Link the external libraries
 target_link_libraries(BeatSaberBridgeAPI.CPP PRIVATE nlohmann_json::nlohmann_json)
 
