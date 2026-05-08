@@ -135,8 +135,8 @@ jobs:
           body: ${{ github.event.inputs.release_body }}
 
           files: |
-            build/BeatSaberBridgeAPI.CPP-linux
-            build/BeatSaberBridgeAPI.CPP-macos
+            binaries/BeatSaberBridgeAPI.CPP-linux
+            binaries/BeatSaberBridgeAPI.CPP-macos
 
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
