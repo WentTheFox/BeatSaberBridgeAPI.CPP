@@ -38,8 +38,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Cache Discord SDK
+        id: cache-sdk
+        uses: actions/cache@v4
+        with:
+          path: lib/discord_social_sdk
+          key: discord-sdk-${{ hashFiles('scripts/sdk-sha256.txt') }}
+
       - name: Set up SDK
+        if: steps.cache-sdk.outputs.cache-hit != 'true'
         shell: bash
+        env:
+          SDK_DOWNLOAD_URL: ${{ secrets.SDK_DOWNLOAD_URL }}
         run: |
           bash scripts/setup-sdk.sh
 
