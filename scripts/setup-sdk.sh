@@ -19,6 +19,53 @@ ASSET_NAME="DiscordSocialSdk-1.9.15332.zip"
 DOWNLOAD_URL="${SDK_DOWNLOAD_URL:?SDK_DOWNLOAD_URL is not set}"
 DOWNLOAD_TOKEN="${SDK_DOWNLOAD_TOKEN:?SDK_DOWNLOAD_TOKEN is not set}"
 
+# Parse a GitHub release asset browser URL into an API assets URL.
+# Input:  https://github.com/{owner}/{repo}/releases/download/{tag}/{filename}
+# Output: https://api.github.com/repos/{owner}/{repo}/releases/assets/{asset_id}
+resolve_github_asset_url() {
+    local browser_url="$1"
+    local token="$2"
+
+    # Extract owner, repo, tag from the browser download URL
+    local owner repo tag
+    owner=$(echo "$browser_url" | sed -E 's|https://github.com/([^/]+)/.*|\1|')
+    repo=$(echo "$browser_url"  | sed -E 's|https://github.com/[^/]+/([^/]+)/.*|\1|')
+    tag=$(echo "$browser_url"   | sed -E 's|.*/releases/download/([^/]+)/.*|\1|')
+
+    local api_release="https://api.github.com/repos/$owner/$repo/releases/tags/$tag"
+    echo "🔍 Looking up release via API: $api_release" >&2
+
+    if ! command -v curl >/dev/null 2>&1; then
+        echo "❌ curl is required to resolve the GitHub API asset URL" >&2
+        exit 1
+    fi
+
+    local release_json
+    release_json=$(curl -sL --fail \
+        -H "Authorization: Bearer $token" \
+        -H "Accept: application/vnd.github+json" \
+        "$api_release")
+
+    local asset_url
+    if command -v jq >/dev/null 2>&1; then
+        asset_url=$(echo "$release_json" | jq -r ".assets[] | select(.name == \"$ASSET_NAME\") | .url")
+    else
+        # Fallback: grep for the asset URL by scanning for the name then backtracking to its url field
+        asset_url=$(echo "$release_json" \
+            | grep -B5 "\"name\": *\"$ASSET_NAME\"" \
+            | grep '"url"' \
+            | tail -1 \
+            | sed -E 's/.*"url": *"([^"]+)".*/\1/')
+    fi
+
+    if [ -z "$asset_url" ]; then
+        echo "❌ Could not find asset '$ASSET_NAME' in release '$tag'" >&2
+        exit 1
+    fi
+
+    echo "$asset_url"
+}
+
 download_file() {
     local dest="$1"
     local url="$2"
@@ -82,8 +129,9 @@ mkdir -p "$RELEASE_LIB_DIR"
 mkdir -p "$DEBUG_LIB_DIR"
 
 echo "📥 Downloading Discord SDK..."
+ASSET_API_URL=$(resolve_github_asset_url "$DOWNLOAD_URL" "$DOWNLOAD_TOKEN")
 FILE_PATH="$TMP_DIR/$ASSET_NAME"
-download_file "$FILE_PATH" "$DOWNLOAD_URL" "$DOWNLOAD_TOKEN"
+download_file "$FILE_PATH" "$ASSET_API_URL" "$DOWNLOAD_TOKEN"
 
 echo "🔍 Verifying integrity..."
 verify_sha256 "$FILE_PATH" "$SDK_SHA256"
