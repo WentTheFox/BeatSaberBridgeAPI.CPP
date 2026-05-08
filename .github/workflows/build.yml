@@ -57,11 +57,11 @@ jobs:
           cmake --build .
 
           
-      - name: Prepare Windows binary
-        if: runner.os == 'Windows'
-        shell: bash
-        run: |
-          cp build/BeatSaberBridgeAPI.CPP.exe BeatSaberBridgeAPI.CPP-windows.exe
+      #- name: Prepare Windows binary
+      #  if: runner.os == 'Windows'
+      #  shell: bash
+      #  run: |
+      #    cp build/BeatSaberBridgeAPI.CPP.exe BeatSaberBridgeAPI.CPP-windows.exe
 
       - name: Prepare Linux binary
         if: runner.os == 'Linux'
@@ -78,12 +78,12 @@ jobs:
       #
       # Upload binaries
       #
-      - name: Upload Windows binary
-        if: runner.os == 'Windows'
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows-binary
-          path: BeatSaberBridgeAPI.CPP-windows.exe
+      #- name: Upload Windows binary
+      #  if: runner.os == 'Windows'
+      #  uses: actions/upload-artifact@v4
+      #  with:
+      #    name: windows-binary
+      #    path: BeatSaberBridgeAPI.CPP-windows.exe
 
       - name: Upload Linux binary
         if: runner.os == 'Linux'
@@ -105,11 +105,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Download Windows binary
-        uses: actions/download-artifact@v4
-        with:
-          name: windows-binary
-          path: binaries
+      #- name: Download Windows binary
+      #  uses: actions/download-artifact@v4
+      #  with:
+      #    name: windows-binary
+      #    path: binaries
 
       - name: Download Linux binary
         uses: actions/download-artifact@v4
@@ -135,7 +135,6 @@ jobs:
           body: ${{ github.event.inputs.release_body }}
 
           files: |
-            build/BeatSaberBridgeAPI.CPP-windows.exe
             build/BeatSaberBridgeAPI.CPP-linux
             build/BeatSaberBridgeAPI.CPP-macos
 
