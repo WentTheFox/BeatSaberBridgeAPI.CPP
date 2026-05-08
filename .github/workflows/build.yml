@@ -61,7 +61,7 @@ jobs:
         if: runner.os == 'Windows'
         shell: bash
         run: |
-          cp build/Release/BeatSaberBridgeAPI.CPP.exe BeatSaberBridgeAPI.CPP-windows.exe
+          cp build/BeatSaberBridgeAPI.CPP.exe BeatSaberBridgeAPI.CPP-windows.exe
 
       - name: Prepare Linux binary
         if: runner.os == 'Linux'
