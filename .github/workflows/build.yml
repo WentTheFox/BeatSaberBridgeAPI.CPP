@@ -53,6 +53,7 @@ jobs:
 
       - name: Build
         run: |
+          cd build
           cmake --build .
 
           
@@ -60,19 +61,19 @@ jobs:
         if: runner.os == 'Windows'
         shell: bash
         run: |
-          cp Release/BeatSaberBridgeAPI.CPP.exe BeatSaberBridgeAPI.CPP-windows.exe
+          cp build/Release/BeatSaberBridgeAPI.CPP.exe BeatSaberBridgeAPI.CPP-windows.exe
 
       - name: Prepare Linux binary
         if: runner.os == 'Linux'
         shell: bash
         run: |
-          cp BeatSaberBridgeAPI.CPP BeatSaberBridgeAPI.CPP-linux
+          cp build/BeatSaberBridgeAPI.CPP BeatSaberBridgeAPI.CPP-linux
 
       - name: Prepare macOS binary
         if: runner.os == 'macOS'
         shell: bash
         run: |
-          cp BeatSaberBridgeAPI.CPP BeatSaberBridgeAPI.CPP-macos
+          cp build/BeatSaberBridgeAPI.CPP BeatSaberBridgeAPI.CPP-macos
 
       #
       # Upload binaries
