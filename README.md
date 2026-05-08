@@ -79,12 +79,12 @@ The Discord Social SDK is not publicly redistributable, so CI cannot download it
 
 ### How it works
 
-`scripts/setup-sdk.sh` reads two environment variables that are injected from GitHub Actions secrets:
+`scripts/setup-sdk.sh` reads two environment variables injected by the workflow — one from a regular Actions variable, one from a secret:
 
-| Secret | Description |
-|--------|-------------|
-| `SDK_DOWNLOAD_URL` | Direct download URL to the SDK zip in your private release |
-| `SDK_DOWNLOAD_TOKEN` | A GitHub PAT with read access to that private repository |
+| Name | Kind | Description |
+|------|------|-------------|
+| `SDK_DOWNLOAD_URL` | Variable | Direct download URL to the SDK zip in your private release |
+| `SDK_DOWNLOAD_TOKEN` | Secret | A GitHub PAT with read access to that private repository |
 
 The script downloads the zip, verifies its SHA-256 against the hash in `scripts/sdk-sha256.txt`, then extracts it. The extracted SDK is cached in CI keyed by that hash, so the download only happens when the SDK version changes.
 
@@ -99,9 +99,9 @@ The script downloads the zip, verifies its SHA-256 against the hash in `scripts/
    - Set repository access to **only** the private assets repo
    - Grant **Contents: Read-only** — nothing else is needed
 
-4. **Add secrets to your fork** under **Settings → Secrets and variables → Actions:**
-   - `SDK_DOWNLOAD_URL` — the release asset download URL, e.g. `https://github.com/you/discord-sdk-assets/releases/download/v1.9.15332/DiscordSocialSdk-1.9.15332.zip`
-   - `SDK_DOWNLOAD_TOKEN` — the PAT from the previous step
+4. **Add to your fork** under **Settings → Secrets and variables → Actions:**
+   - Under **Variables**: add `SDK_DOWNLOAD_URL` — the release asset download URL, e.g. `https://github.com/you/discord-sdk-assets/releases/download/v1.9.15332/DiscordSocialSdk-1.9.15332.zip`
+   - Under **Secrets**: add `SDK_DOWNLOAD_TOKEN` — the PAT from the previous step
 
 5. **Update `scripts/sdk-sha256.txt`** if you are using a different SDK version. Compute the SHA-256 of your zip:
    - Linux / macOS: `sha256sum DiscordSocialSdk-*.zip`

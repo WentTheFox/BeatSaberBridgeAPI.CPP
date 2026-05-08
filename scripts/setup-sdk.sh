@@ -24,6 +24,8 @@ download_file() {
     local url="$2"
     local token="$3"
 
+    echo "🌐 Requesting: $url"
+
     if command -v curl >/dev/null 2>&1; then
         curl -L --fail \
             -H "Authorization: Bearer $token" \
