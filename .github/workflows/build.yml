@@ -74,12 +74,12 @@ jobs:
 
       - name: Prepare Windows build
         if: runner.os == 'Windows'
-        shell: bash
+        shell: pwsh
         run: |
-          mkdir dist
-          cp build/Release/BeatSaberBridgeAPI.CPP.exe dist/
-          cp build/Release/discord_partner_sdk.dll dist/
-          cd dist && zip ../BeatSaberBridgeAPI.CPP-windows.zip *
+          New-Item -ItemType Directory -Path dist
+          Copy-Item build/Release/BeatSaberBridgeAPI.CPP.exe dist/
+          Copy-Item build/Release/discord_partner_sdk.dll dist/
+          Compress-Archive -Path dist/* -DestinationPath BeatSaberBridgeAPI.CPP-windows.zip
 
       - name: Prepare Linux build
         if: runner.os == 'Linux'
