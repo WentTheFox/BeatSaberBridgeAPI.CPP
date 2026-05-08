@@ -55,68 +55,50 @@ jobs:
           cmake --build build --config Release
 
       #
-      # Rename binaries depending on platform
+      # Copy the built executable
+      # Replace "MyProgram" with your actual executable name
       #
-      - name: Prepare release files (Windows)
+      - name: Prepare Windows binary
         if: runner.os == 'Windows'
         shell: bash
         run: |
-          mkdir release
-          find build -name "*.exe" -exec cp {} release/ \;
+          cp build/Release/MyProgram.exe MyProgram-windows.exe
 
-      - name: Prepare release files (Linux)
+      - name: Prepare Linux binary
         if: runner.os == 'Linux'
         shell: bash
         run: |
-          mkdir release
-          find build -type f -executable -exec cp {} release/ \;
+          cp build/MyProgram MyProgram-linux
 
-      - name: Prepare release files (macOS)
+      - name: Prepare macOS binary
         if: runner.os == 'macOS'
         shell: bash
         run: |
-          mkdir release
-          find build -type f -perm +111 -exec cp {} release/ \;
+          cp build/MyProgram MyProgram-macos
 
       #
-      # Compress artifacts
+      # Upload binaries
       #
-      - name: Archive release files
-        shell: bash
-        run: |
-          cd release
-
-          if [ "${{ runner.os }}" = "Windows" ]; then
-            7z a ../windows-build.zip *
-          elif [ "${{ runner.os }}" = "Linux" ]; then
-            tar -czf ../linux-build.tar.gz *
-          else
-            tar -czf ../macos-build.tar.gz *
-          fi
-
-      #
-      # Upload artifacts
-      #
-      - name: Upload Windows artifact
+      - name: Upload Windows binary
         if: runner.os == 'Windows'
         uses: actions/upload-artifact@v4
         with:
-          name: windows-build
-          path: windows-build.zip
+          name: windows-binary
+          path: MyProgram-windows.exe
 
-      - name: Upload Linux artifact
+      - name: Upload Linux binary
         if: runner.os == 'Linux'
         uses: actions/upload-artifact@v4
         with:
-          name: linux-build
-          path: linux-build.tar.gz
+          name: linux-binary
+          path: MyProgram-linux
 
-      - name: Upload macOS artifact
+      - name: Upload macOS binary
         if: runner.os == 'macOS'
         uses: actions/upload-artifact@v4
         with:
-          name: macos-build
-          path: macos-build.tar.gz
+          name: macos-binary
+          path: MyProgram-macos
 
   release:
     if: github.event_name == 'workflow_dispatch'
@@ -124,23 +106,23 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Download Windows artifact
+      - name: Download Windows binary
         uses: actions/download-artifact@v4
         with:
-          name: windows-build
-          path: artifacts
+          name: windows-binary
+          path: binaries
 
-      - name: Download Linux artifact
+      - name: Download Linux binary
         uses: actions/download-artifact@v4
         with:
-          name: linux-build
-          path: artifacts
+          name: linux-binary
+          path: binaries
 
-      - name: Download macOS artifact
+      - name: Download macOS binary
         uses: actions/download-artifact@v4
         with:
-          name: macos-build
-          path: artifacts
+          name: macos-binary
+          path: binaries
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -153,13 +135,10 @@ jobs:
 
           body: ${{ github.event.inputs.release_body }}
 
-          draft: false
-          prerelease: false
-
           files: |
-            artifacts/windows-build.zip
-            artifacts/linux-build.tar.gz
-            artifacts/macos-build.tar.gz
+            binaries/MyProgram-windows.exe
+            binaries/MyProgram-linux
+            binaries/MyProgram-macos
 
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
