@@ -72,44 +72,53 @@ jobs:
           cd build
           cmake --build . --config Release
 
-      - name: Prepare Windows binary
+      - name: Prepare Windows build
         if: runner.os == 'Windows'
         shell: bash
         run: |
-          cp build/Release/BeatSaberBridgeAPI.CPP.exe BeatSaberBridgeAPI.CPP-windows.exe
+          mkdir dist
+          cp build/Release/BeatSaberBridgeAPI.CPP.exe dist/
+          cp build/Release/discord_partner_sdk.dll dist/
+          cd dist && zip ../BeatSaberBridgeAPI.CPP-windows.zip *
 
-      - name: Prepare Linux binary
+      - name: Prepare Linux build
         if: runner.os == 'Linux'
         shell: bash
         run: |
-          cp build/BeatSaberBridgeAPI.CPP BeatSaberBridgeAPI.CPP-linux
+          mkdir dist
+          cp build/BeatSaberBridgeAPI.CPP dist/
+          cp build/libdiscord_partner_sdk.so dist/
+          cd dist && zip ../BeatSaberBridgeAPI.CPP-linux.zip *
 
-      - name: Prepare macOS binary
+      - name: Prepare macOS build
         if: runner.os == 'macOS'
         shell: bash
         run: |
-          cp build/BeatSaberBridgeAPI.CPP BeatSaberBridgeAPI.CPP-macos
+          mkdir dist
+          cp build/BeatSaberBridgeAPI.CPP dist/
+          cp build/libdiscord_partner_sdk.dylib dist/
+          cd dist && zip ../BeatSaberBridgeAPI.CPP-macos.zip *
 
-      - name: Upload Windows binary
+      - name: Upload Windows build
         if: runner.os == 'Windows'
         uses: actions/upload-artifact@v4
         with:
-          name: windows-binary
-          path: BeatSaberBridgeAPI.CPP-windows.exe
+          name: windows-build
+          path: BeatSaberBridgeAPI.CPP-windows.zip
 
-      - name: Upload Linux binary
+      - name: Upload Linux build
         if: runner.os == 'Linux'
         uses: actions/upload-artifact@v4
         with:
-          name: linux-binary
-          path: BeatSaberBridgeAPI.CPP-linux
+          name: linux-build
+          path: BeatSaberBridgeAPI.CPP-linux.zip
 
-      - name: Upload macOS binary
+      - name: Upload macOS build
         if: runner.os == 'macOS'
         uses: actions/upload-artifact@v4
         with:
-          name: macos-binary
-          path: BeatSaberBridgeAPI.CPP-macos
+          name: macos-build
+          path: BeatSaberBridgeAPI.CPP-macos.zip
 
   release:
     if: github.event_name == 'workflow_dispatch'
@@ -117,22 +126,22 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Download Windows binary
+      - name: Download Windows build
         uses: actions/download-artifact@v4
         with:
-          name: windows-binary
+          name: windows-build
           path: binaries
 
-      - name: Download Linux binary
+      - name: Download Linux build
         uses: actions/download-artifact@v4
         with:
-          name: linux-binary
+          name: linux-build
           path: binaries
 
-      - name: Download macOS binary
+      - name: Download macOS build
         uses: actions/download-artifact@v4
         with:
-          name: macos-binary
+          name: macos-build
           path: binaries
 
       - name: Create GitHub Release
@@ -147,9 +156,9 @@ jobs:
           body: ${{ github.event.inputs.release_body }}
 
           files: |
-            binaries/BeatSaberBridgeAPI.CPP-windows.exe
-            binaries/BeatSaberBridgeAPI.CPP-linux
-            binaries/BeatSaberBridgeAPI.CPP-macos
+            binaries/BeatSaberBridgeAPI.CPP-windows.zip
+            binaries/BeatSaberBridgeAPI.CPP-linux.zip
+            binaries/BeatSaberBridgeAPI.CPP-macos.zip
 
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
