@@ -241,7 +241,8 @@ void rpcWorker(std::shared_ptr<discordpp::Client> client) {
                     client->UpdateRichPresence(activity, [](auto result) {});
                 }
                 else if (data.type == "LobbyPlayerOnDisconnect" || data.type == "LobbyPlayerOnConnect") {
-                    std::cout << "LobbyPlayer Called" << std::endl;
+                    std::cout << "Lobby Code: " + data.metadata["lobbyCode"] << std::endl;
+
                     if (partyId.empty()) {
                         // Generate a simple UUID (simplified)
                         partyId = "party_" + std::to_string(getCurrentTimestamp());
@@ -261,10 +262,10 @@ void rpcWorker(std::shared_ptr<discordpp::Client> client) {
                     discordpp::ActivityParty party;
                     party.SetId(partyId);
                     party.SetCurrentSize(std::stoi(data.metadata["playerCount"]));
-                    party.SetMaxSize(4);
+                    party.SetMaxSize(std::stoi(data.metadata["maxPlayerCount"]));
 
                     discordpp::ActivitySecrets secrets;
-                    secrets.SetJoin("bsrpc://MultiplayerCore/BeatTogether/" + data.metadata["lobbyCode"]);
+                    secrets.SetJoin("bsrpc://BeatTogether/" + data.metadata["lobbyCode"]);
 
                     activity.SetSecrets(secrets);
                     activity.SetParty(party);
@@ -336,7 +337,7 @@ int main(int argc, char* argv[]) {
     // Set up logging callback
     client->AddLogCallback([](auto message, auto severity) {
         std::cout << "[" << EnumToString(severity) << "] " << message << std::endl;
-    }, discordpp::LoggingSeverity::None);
+    }, discordpp::LoggingSeverity::Verbose);
 
     // Set up status callback to monitor client connection
     client->SetStatusChangedCallback([client](discordpp::Client::Status status, discordpp::Client::Error error, int32_t errorDetail) {
