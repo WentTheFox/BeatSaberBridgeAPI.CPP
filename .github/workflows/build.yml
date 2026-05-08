@@ -54,13 +54,13 @@ jobs:
       - name: Build
         run: |
           cd build
-          cmake --build .
+          cmake --build . --config Release
 
       - name: Prepare Windows binary
         if: runner.os == 'Windows'
         shell: bash
         run: |
-          cp build/BeatSaberBridgeAPI.CPP.exe BeatSaberBridgeAPI.CPP-windows.exe
+          cp build/Release/BeatSaberBridgeAPI.CPP.exe BeatSaberBridgeAPI.CPP-windows.exe
 
       - name: Prepare Linux binary
         if: runner.os == 'Linux'

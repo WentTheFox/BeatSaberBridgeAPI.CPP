@@ -44,7 +44,7 @@ EventData storedSongData;
 time_t lastDataTime = std::time(nullptr);
 bool rpcCleared = false;
 time_t pauseStartTime = 0;
-int totalPausedDuration = 0;
+time_t totalPausedDuration = 0;
 
 int httpPort = 8080;
 
