@@ -48,11 +48,12 @@ jobs:
 
       - name: Configure CMake
         run: |
-          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+          cmake ..
 
       - name: Build
         run: |
-          cmake --build build --config Release
+          cd build
+          cmake --build .
 
           
       - name: Prepare Windows binary
@@ -133,9 +134,9 @@ jobs:
           body: ${{ github.event.inputs.release_body }}
 
           files: |
-            binaries/BeatSaberBridgeAPI.CPP-windows.exe
-            binaries/BeatSaberBridgeAPI.CPP-linux
-            binaries/BeatSaberBridgeAPI.CPP-macos
+            build/BeatSaberBridgeAPI.CPP-windows.exe
+            build/BeatSaberBridgeAPI.CPP-linux
+            build/BeatSaberBridgeAPI.CPP-macos
 
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
