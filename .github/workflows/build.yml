@@ -3,33 +3,43 @@ name: CMake Build
 on:
   push:
     branches: [main, master]
+
   pull_request:
     branches: [main, master]
+
   workflow_dispatch:
     inputs:
       tag_name:
         description: 'Tag name for release'
         required: true
+
       release_name:
         description: 'Release title'
         required: false
         default: ''
+
       release_body:
         description: 'Release description'
         required: false
         default: ''
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ${{ matrix.os }}
+
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up SDK
+        shell: bash
         run: |
           bash scripts/setup-sdk.sh
 
@@ -44,14 +54,112 @@ jobs:
         run: |
           cmake --build build --config Release
 
-      - name: Create GitHub release tag
-        if: github.event_name == 'workflow_dispatch'
+      #
+      # Rename binaries depending on platform
+      #
+      - name: Prepare release files (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          mkdir release
+          find build -name "*.exe" -exec cp {} release/ \;
+
+      - name: Prepare release files (Linux)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          mkdir release
+          find build -type f -executable -exec cp {} release/ \;
+
+      - name: Prepare release files (macOS)
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          mkdir release
+          find build -type f -perm +111 -exec cp {} release/ \;
+
+      #
+      # Compress artifacts
+      #
+      - name: Archive release files
+        shell: bash
+        run: |
+          cd release
+
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            7z a ../windows-build.zip *
+          elif [ "${{ runner.os }}" = "Linux" ]; then
+            tar -czf ../linux-build.tar.gz *
+          else
+            tar -czf ../macos-build.tar.gz *
+          fi
+
+      #
+      # Upload artifacts
+      #
+      - name: Upload Windows artifact
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-build
+          path: windows-build.zip
+
+      - name: Upload Linux artifact
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-build
+          path: linux-build.tar.gz
+
+      - name: Upload macOS artifact
+        if: runner.os == 'macOS'
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-build
+          path: macos-build.tar.gz
+
+  release:
+    if: github.event_name == 'workflow_dispatch'
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download Windows artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-build
+          path: artifacts
+
+      - name: Download Linux artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-build
+          path: artifacts
+
+      - name: Download macOS artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-build
+          path: artifacts
+
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.event.inputs.tag_name }}
-          release_name: ${{ github.event.inputs.release_name != '' && github.event.inputs.release_name || github.event.inputs.tag_name }}
+
+          name: ${{ github.event.inputs.release_name != '' &&
+            github.event.inputs.release_name ||
+            github.event.inputs.tag_name }}
+
           body: ${{ github.event.inputs.release_body }}
+
           draft: false
           prerelease: false
+
+          files: |
+            artifacts/windows-build.zip
+            artifacts/linux-build.tar.gz
+            artifacts/macos-build.tar.gz
+
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
