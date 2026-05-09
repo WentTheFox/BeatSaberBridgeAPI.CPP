@@ -253,7 +253,6 @@ void rpcWorker(std::shared_ptr<discordpp::Client> client) {
                     updatePresence(client, activity);
                 }
                 else if (data.type == "LobbyPlayerOnDisconnect" || data.type == "LobbyPlayerOnConnect") {
-
                     if (partyId.empty()) {
                         // Generate a simple UUID (simplified)
                         partyId = "party_" + std::to_string(getCurrentTimestamp());
