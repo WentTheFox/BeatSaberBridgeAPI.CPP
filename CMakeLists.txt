@@ -30,6 +30,7 @@ endif()
 add_executable(BeatSaberBridgeAPI.CPP main.cpp)
 
 set_target_properties(BeatSaberBridgeAPI.CPP PROPERTIES
+    OUTPUT_NAME "BeatSaberBridgeAPI"
     BUILD_RPATH "${RPATH_ORIGIN}"
     INSTALL_RPATH "${RPATH_ORIGIN}"
 )
