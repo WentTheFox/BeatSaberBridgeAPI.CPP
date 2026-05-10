@@ -21,11 +21,17 @@ FetchContent_Declare(json
 
 FetchContent_MakeAvailable(cpp_httplib json)
 
+if(APPLE)
+    set(RPATH_ORIGIN "@executable_path")
+else()
+    set(RPATH_ORIGIN "$ORIGIN")
+endif()
+
 add_executable(BeatSaberBridgeAPI.CPP main.cpp)
 
 set_target_properties(BeatSaberBridgeAPI.CPP PROPERTIES
-    BUILD_RPATH "$ORIGIN"
-    INSTALL_RPATH "$ORIGIN"
+    BUILD_RPATH "${RPATH_ORIGIN}"
+    INSTALL_RPATH "${RPATH_ORIGIN}"
 )
 
 # Link the external libraries
@@ -66,16 +72,6 @@ get_filename_component(DISCORD_SHARED_LIB_NAME "${DISCORD_SHARED_LIB}" NAME)
 # Link the Social SDK library
 target_link_libraries(BeatSaberBridgeAPI.CPP PRIVATE ${DISCORD_LIB_PATH})
 
-# Set the runtime search path (RPATH) for Linux and macOS
-if(UNIX)
-    # Use RPATH when building
-    set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
-    # Set the RPATH to use the lib directory relative to the executable
-    set(CMAKE_INSTALL_RPATH "$ORIGIN")
-    if(APPLE)
-        set(CMAKE_INSTALL_RPATH "@executable_path")
-    endif()
-endif()
 
 # Copy Social SDK shared library to output directory, so it's available at runtime.
 add_custom_command(TARGET BeatSaberBridgeAPI.CPP POST_BUILD
