@@ -84,6 +84,16 @@ jobs:
           cd build
           cmake --build . --config Release
 
+      - name: Self-test
+        if: steps.cache-build.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            ./build/Release/BeatSaberBridgeAPI.CPP.exe --self-test
+          else
+            ./build/BeatSaberBridgeAPI.CPP --self-test
+          fi
+
       - name: Prepare Windows build
         if: runner.os == 'Windows' && steps.cache-build.outputs.cache-hit != 'true'
         shell: pwsh
