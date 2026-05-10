@@ -84,6 +84,10 @@ jobs:
           cd build
           cmake --build . --config Release
 
+      - name: Install runtime dependencies (Linux)
+        if: runner.os == 'Linux' && steps.cache-build.outputs.cache-hit != 'true'
+        run: sudo apt-get install -y --no-install-recommends libpulse0
+
       - name: Self-test
         if: steps.cache-build.outputs.cache-hit != 'true'
         shell: bash
