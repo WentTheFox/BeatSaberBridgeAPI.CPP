@@ -84,6 +84,29 @@ jobs:
           cd build
           cmake --build . --config Release
 
+      - name: Install runtime dependencies (Linux)
+        if: runner.os == 'Linux' && steps.cache-build.outputs.cache-hit != 'true'
+        run: sudo apt-get install -y --no-install-recommends libpulse0
+
+      - name: Self-test
+        if: steps.cache-build.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          TEST_DIR=$(mktemp -d)
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            cp build/Release/BeatSaberBridgeAPI.CPP.exe "$TEST_DIR/"
+            cp build/Release/discord_partner_sdk.dll "$TEST_DIR/"
+            "$TEST_DIR/BeatSaberBridgeAPI.CPP.exe" --self-test
+          elif [ "$RUNNER_OS" = "macOS" ]; then
+            cp build/BeatSaberBridgeAPI.CPP "$TEST_DIR/"
+            cp build/libdiscord_partner_sdk.dylib "$TEST_DIR/"
+            "$TEST_DIR/BeatSaberBridgeAPI.CPP" --self-test
+          else
+            cp build/BeatSaberBridgeAPI.CPP "$TEST_DIR/"
+            cp build/libdiscord_partner_sdk.so "$TEST_DIR/"
+            "$TEST_DIR/BeatSaberBridgeAPI.CPP" --self-test
+          fi
+
       - name: Prepare Windows build
         if: runner.os == 'Windows' && steps.cache-build.outputs.cache-hit != 'true'
         shell: pwsh
