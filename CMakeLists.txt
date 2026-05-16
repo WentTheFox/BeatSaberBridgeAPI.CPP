@@ -19,6 +19,11 @@ FetchContent_Declare(json
   GIT_TAG master
 )
 
+FetchContent_Declare(libzip
+  GIT_REPOSITORY https://github.com/nih-at/libzip.git
+  GIT_TAG master
+)
+
 FetchContent_MakeAvailable(cpp_httplib json)
 
 if(APPLE)
