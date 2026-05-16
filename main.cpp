@@ -1,3 +1,5 @@
+#include <fstream>
+#include <ostream>
 #define DISCORDPP_IMPLEMENTATION
 #include "include/discordpp.h"
 #include <iostream>
@@ -19,8 +21,18 @@
 #include <chrono>
 #include <memory>
 #include <sstream>
+
+#define CPPHTTPLIB_OPENSSL_SUPPORT
 #include <httplib.h>
+
+#include <array>
 #include <nlohmann/json.hpp>
+
+#include <zip.h>
+
+#include <filesystem>
+
+namespace fs = std::filesystem;
 
 uint64_t applicationId = 1028340906740420711;
 
@@ -48,6 +60,172 @@ time_t pauseStartTime = 0;
 time_t totalPausedDuration = 0;
 
 int httpPort = 8080;
+
+bool downloadFile(const std::string& host,
+                  const std::string& path,
+                  const fs::path& outputFile)
+{
+    httplib::Client client(host);
+    client.set_follow_location(true);
+
+    std::ofstream out(outputFile, std::ios::binary);
+
+    if (!out)
+    {
+        std::cerr << "Failed to open output file\n";
+        return false;
+    }
+
+    auto res = client.Get(
+        path.c_str(),
+        [&](const char* data, size_t data_length)
+        {
+            out.write(data, data_length);
+            return true; // continue receiving
+        });
+
+    out.close();
+
+    if (!res)
+    {
+        std::cerr << "Request failed: ";
+
+        switch (res.error())
+        {
+            case httplib::Error::Connection:
+                std::cerr << "Connection error";
+                break;
+
+            case httplib::Error::BindIPAddress:
+                std::cerr << "Failed to bind IP address";
+                break;
+
+            case httplib::Error::Read:
+                std::cerr << "Read error";
+                break;
+
+            case httplib::Error::Write:
+                std::cerr << "Write error";
+                break;
+
+            case httplib::Error::ExceedRedirectCount:
+                std::cerr << "Too many redirects";
+                break;
+
+            case httplib::Error::Canceled:
+                std::cerr << "Request canceled";
+                break;
+
+            case httplib::Error::SSLConnection:
+                std::cerr << "SSL connection failed";
+                break;
+
+            case httplib::Error::SSLLoadingCerts:
+                std::cerr << "Failed to load SSL certificates";
+                break;
+
+            case httplib::Error::SSLServerVerification:
+                std::cerr << "SSL server verification failed";
+                break;
+
+            case httplib::Error::UnsupportedMultipartBoundaryChars:
+                std::cerr << "Unsupported multipart boundary chars";
+                break;
+
+            case httplib::Error::Compression:
+                std::cerr << "Compression error";
+                break;
+
+            case httplib::Error::ConnectionTimeout:
+                std::cerr << "Connection timeout";
+                break;
+
+            default:
+                std::cerr << "Unknown error";
+                break;
+        }
+        std::cerr << '\n';
+        return false;
+    }
+
+    if (res->status != 200)
+    {
+        std::cerr << "HTTP status: "
+                  << res->status << '\n';
+
+        return false;
+    }
+
+    return true;
+}
+
+void extractZip(const fs::path& archivePath, const fs::path& outputDir)
+{
+    int err = 0;
+
+    zip* z = zip_open(archivePath.string().c_str(), ZIP_RDONLY, &err);
+    if (!z) {
+        return;
+    }
+
+    fs::create_directories(outputDir);
+
+    zip_int64_t numEntries = zip_get_num_entries(z, 0);
+
+    for (zip_uint64_t i = 0; i < static_cast<zip_uint64_t>(numEntries); ++i)
+    {
+        zip_stat_t st{};
+        if (zip_stat_index(z, i, 0, &st) != 0) {
+            continue;
+        }
+
+        fs::path entryPath = fs::path(st.name);
+
+        // Prevent ZIP Slip attacks
+        if (entryPath.is_absolute() || st.name[0] == '/' ||
+            entryPath.string().find("..") != std::string::npos)
+        {
+            continue;
+        }
+
+        fs::path outPath = outputDir / entryPath;
+
+        // Directory entry
+        if (st.name[strlen(st.name) - 1] == '/')
+        {
+            fs::create_directories(outPath);
+            continue;
+        }
+
+        // Create parent directories
+        fs::create_directories(outPath.parent_path());
+
+        zip_file* zf = zip_fopen_index(z, i, 0);
+        if (!zf) {
+            continue;
+        }
+
+        std::ofstream out(outPath, std::ios::binary);
+        if (!out) {
+            zip_fclose(zf);
+            continue;
+        }
+
+        constexpr size_t BUFFER_SIZE = 8192;
+        std::vector<char> buffer(BUFFER_SIZE);
+
+        zip_int64_t bytesRead = 0;
+
+        while ((bytesRead = zip_fread(zf, buffer.data(), buffer.size())) > 0)
+        {
+            out.write(buffer.data(), bytesRead);
+        }
+
+        zip_fclose(zf);
+    }
+
+    zip_close(z);
+}
 
 // Signal handler to stop the application
 void signalHandler(int signum) {
@@ -113,6 +291,79 @@ void updatePresence(std::shared_ptr<discordpp::Client> client,
 
 void httpServer() {
     httplib::Server svr;
+
+    svr.Get("/version", [](const httplib::Request& req, httplib::Response& res) {
+        res.set_content(nlohmann::json({{"version", "0.1.5"}}).dump(), "application/json");
+    });
+
+    svr.Post("/update", [](const httplib::Request& req, httplib::Response& res) {
+        try {
+            fs::path temp_path = fs::temp_directory_path();
+            fs::path current_path = fs::current_path();
+
+            std::cout << temp_path << std::endl;
+
+            httplib::Client cli("https://api.github.com");
+            auto clientResponse = cli.Get("/repos/RainzDev/BeatSaberBridgeAPI.CPP/releases/latest");
+
+            if (clientResponse) {
+                nlohmann::json jsonData = nlohmann::json::parse(clientResponse->body);
+
+                std::array assets = jsonData["assets"];
+
+                std::string downloadUrl;
+
+                #ifdef _WIN32
+                    downloadUrl = assets[2]["browser_download_url"];
+                #elif __linux__
+                    downloadUrl = assets[0]["browser_download_url"];
+                #elif __APPLE__
+                    #include "TargetConditionals.h"
+                    #if TARGET_OS_MAC
+                        downloadUrl = assets[1]["browser_download_url"];
+                    #endif
+                #endif
+
+                fs::path mainTempPath = "temp_BeatSaberBridgeAPI";
+                fs::path zipName = "download.zip";
+
+                fs::create_directory(temp_path / mainTempPath);
+
+                downloadUrl.erase(0, 18);
+
+                downloadFile("https://github.com", downloadUrl, temp_path / mainTempPath / zipName);
+                extractZip(temp_path / mainTempPath / zipName, temp_path / mainTempPath);
+
+                for (const auto & entry : fs::directory_iterator(temp_path / mainTempPath)) {
+                    if (entry != zipName) {
+                        std::cout << entry << std::endl;
+                        try {
+                            #ifdef _WIN32
+                                fs::rename(current_path / entry.path().filename(), current_path / entry.path().filename().replace_extension(".old"));
+                            #else
+                                fs::remove(entry.path().filename());
+                            #endif
+                            fs::remove(entry.path().filename());
+                            fs::copy(entry, current_path / entry.path().filename(), fs::copy_options::overwrite_existing);
+                        } catch (const fs::filesystem_error& e) {
+                            std::cerr << "Filesystem Error: " << e.what() << '\n';
+                            std::cerr << "Error Code: " << e.code().message() << '\n';
+                        }
+                    }
+                }
+
+            } else {
+                std::cerr << "Failed to download latest release" << std::endl;
+            }
+
+
+
+        } catch (const std::exception& e) {
+            std::cerr << "❌ Error processing request: " << e.what() << std::endl;
+            res.set_content(nlohmann::json({{"status", "error"}, {"message", e.what()}}).dump(), "application/json");
+            res.status = 400;
+        }
+    });
 
     svr.Post("/sendData", [](const httplib::Request& req, httplib::Response& res) {
         try {

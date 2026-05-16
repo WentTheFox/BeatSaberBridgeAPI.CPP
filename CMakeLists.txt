@@ -21,6 +21,9 @@ FetchContent_Declare(json
 
 FetchContent_MakeAvailable(cpp_httplib json)
 
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(LIBZIP REQUIRED libzip)
+
 add_executable(BeatSaberBridgeAPI.CPP main.cpp)
 
 set_target_properties(BeatSaberBridgeAPI.CPP PROPERTIES
@@ -29,10 +32,14 @@ set_target_properties(BeatSaberBridgeAPI.CPP PROPERTIES
 )
 
 # Link the external libraries
-target_link_libraries(BeatSaberBridgeAPI.CPP PRIVATE nlohmann_json::nlohmann_json)
+target_link_libraries(BeatSaberBridgeAPI.CPP PRIVATE nlohmann_json::nlohmann_json ssl crypto)
+
 
 # Add cpp-httplib include directory
 target_include_directories(BeatSaberBridgeAPI.CPP PRIVATE ${cpp_httplib_SOURCE_DIR})
+
+target_link_libraries(BeatSaberBridgeAPI.CPP PRIVATE ${LIBZIP_LIBRARIES})
+target_include_directories(BeatSaberBridgeAPI.CPP PRIVATE ${LIBZIP_INCLUDE_DIRS})
 
 if(WIN32)
     target_compile_definitions(BeatSaberBridgeAPI.CPP PRIVATE _WIN32_WINNT=0x0A00)
