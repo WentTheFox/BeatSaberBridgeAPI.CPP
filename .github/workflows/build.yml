@@ -42,7 +42,7 @@ jobs:
         id: cache-build
         uses: actions/cache@v4
         with:
-          path: BeatSaberBridgeAPI.CPP-*.zip
+          path: BeatSaberBridgeAPI-*.zip
           key: build-${{ runner.os }}-${{ github.sha }}
 
       - name: Read SDK cache key
@@ -84,53 +84,76 @@ jobs:
           cd build
           cmake --build . --config Release
 
+      - name: Install runtime dependencies (Linux)
+        if: runner.os == 'Linux' && steps.cache-build.outputs.cache-hit != 'true'
+        run: sudo apt-get install -y --no-install-recommends libpulse0
+
+      - name: Self-test
+        if: steps.cache-build.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          TEST_DIR=$(mktemp -d)
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            cp build/Release/BeatSaberBridgeAPI.exe "$TEST_DIR/"
+            cp build/Release/discord_partner_sdk.dll "$TEST_DIR/"
+            "$TEST_DIR/BeatSaberBridgeAPI.exe" --self-test
+          elif [ "$RUNNER_OS" = "macOS" ]; then
+            cp build/BeatSaberBridgeAPI "$TEST_DIR/"
+            cp build/libdiscord_partner_sdk.dylib "$TEST_DIR/"
+            "$TEST_DIR/BeatSaberBridgeAPI" --self-test
+          else
+            cp build/BeatSaberBridgeAPI "$TEST_DIR/"
+            cp build/libdiscord_partner_sdk.so "$TEST_DIR/"
+            "$TEST_DIR/BeatSaberBridgeAPI" --self-test
+          fi
+
       - name: Prepare Windows build
         if: runner.os == 'Windows' && steps.cache-build.outputs.cache-hit != 'true'
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Path dist
-          Copy-Item build/Release/BeatSaberBridgeAPI.CPP.exe dist/
+          Copy-Item build/Release/BeatSaberBridgeAPI.exe dist/
           Copy-Item build/Release/discord_partner_sdk.dll dist/
-          Compress-Archive -Path dist/* -DestinationPath BeatSaberBridgeAPI.CPP-windows.zip
+          Compress-Archive -Path dist/* -DestinationPath BeatSaberBridgeAPI-windows.zip
 
       - name: Prepare Linux build
         if: runner.os == 'Linux' && steps.cache-build.outputs.cache-hit != 'true'
         shell: bash
         run: |
           mkdir dist
-          cp build/BeatSaberBridgeAPI.CPP dist/
+          cp build/BeatSaberBridgeAPI dist/
           cp build/libdiscord_partner_sdk.so dist/
-          cd dist && zip ../BeatSaberBridgeAPI.CPP-linux.zip *
+          cd dist && zip ../BeatSaberBridgeAPI-linux.zip *
 
       - name: Prepare macOS build
         if: runner.os == 'macOS' && steps.cache-build.outputs.cache-hit != 'true'
         shell: bash
         run: |
           mkdir dist
-          cp build/BeatSaberBridgeAPI.CPP dist/
+          cp build/BeatSaberBridgeAPI dist/
           cp build/libdiscord_partner_sdk.dylib dist/
-          cd dist && zip ../BeatSaberBridgeAPI.CPP-macos.zip *
+          cd dist && zip ../BeatSaberBridgeAPI-macos.zip *
 
       - name: Upload Windows build
         if: runner.os == 'Windows'
         uses: actions/upload-artifact@v4
         with:
           name: windows-build
-          path: BeatSaberBridgeAPI.CPP-windows.zip
+          path: BeatSaberBridgeAPI-windows.zip
 
       - name: Upload Linux build
         if: runner.os == 'Linux'
         uses: actions/upload-artifact@v4
         with:
           name: linux-build
-          path: BeatSaberBridgeAPI.CPP-linux.zip
+          path: BeatSaberBridgeAPI-linux.zip
 
       - name: Upload macOS build
         if: runner.os == 'macOS'
         uses: actions/upload-artifact@v4
         with:
           name: macos-build
-          path: BeatSaberBridgeAPI.CPP-macos.zip
+          path: BeatSaberBridgeAPI-macos.zip
 
   release:
     if: github.event_name == 'workflow_dispatch'
@@ -168,9 +191,9 @@ jobs:
           body: ${{ github.event.inputs.release_body }}
 
           files: |
-            binaries/BeatSaberBridgeAPI.CPP-windows.zip
-            binaries/BeatSaberBridgeAPI.CPP-linux.zip
-            binaries/BeatSaberBridgeAPI.CPP-macos.zip
+            binaries/BeatSaberBridgeAPI-windows.zip
+            binaries/BeatSaberBridgeAPI-linux.zip
+            binaries/BeatSaberBridgeAPI-macos.zip
 
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

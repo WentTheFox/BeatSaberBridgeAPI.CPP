@@ -572,18 +572,28 @@ int main(int argc, char* argv[]) {
 #endif
 
     // Parse runtime arguments
+    bool selfTest = false;
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
         if (arg == "--port" && i + 1 < argc) {
             httpPort = std::stoi(argv[++i]);
         } else if (arg == "--app-id" && i + 1 < argc) {
             applicationId = std::stoull(argv[++i]);
+        } else if (arg == "--self-test") {
+            selfTest = true;
         } else if (arg == "--help" || arg == "-h") {
-            std::cout << "Usage: " << argv[0] << " [--port <port>] [--app-id <id>]\n";
+            std::cout << "Usage: " << argv[0] << " [--port <port>] [--app-id <id>] [--self-test]\n";
             return 0;
         } else {
             std::cerr << "Unknown argument: " << arg << "\n";
         }
+    }
+
+    if (selfTest) {
+        auto client = std::make_shared<discordpp::Client>();
+        discordpp::RunCallbacks();
+        std::cout << "Self-test passed: Discord SDK loaded and initialized successfully\n";
+        return 0;
     }
 
     std::signal(SIGINT, signalHandler);

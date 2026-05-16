@@ -56,7 +56,7 @@ BeatSaberBridgeAPI.CPP/
 The repository ships with a default application ID. If you want to use your own Discord application (e.g. to show a custom name or icon in Rich Presence), you can override it at runtime without recompiling:
 
 ```sh
-./BeatSaberBridgeAPI.CPP --app-id YOUR_APPLICATION_ID_HERE
+./BeatSaberBridgeAPI --app-id YOUR_APPLICATION_ID_HERE
 ```
 
 Alternatively, change the default by editing the `applicationId` variable at the top of `main.cpp`.
@@ -164,7 +164,7 @@ copy "%MINGW%\libwinpthread-1.dll"   build\
 Then run:
 
 ```bat
-build\BeatSaberBridgeAPI.CPP.exe
+build\BeatSaberBridgeAPI.exe
 ```
 
 > **Tip:** To avoid shipping the MinGW runtime DLLs, you can link statically by adding `-DCMAKE_EXE_LINKER_FLAGS="-static"` to the CMake configure step. This produces a larger but fully self-contained executable.
@@ -174,7 +174,7 @@ build\BeatSaberBridgeAPI.CPP.exe
 The RPATH is set to `$ORIGIN` / `@executable_path` so the shared library is found automatically next to the binary:
 
 ```sh
-./build/BeatSaberBridgeAPI.CPP
+./build/BeatSaberBridgeAPI
 ```
 
 ### Options
