@@ -86,7 +86,7 @@ jobs:
 
       - name: Install runtime dependencies (Linux)
         if: runner.os == 'Linux' && steps.cache-build.outputs.cache-hit != 'true'
-        run: sudo apt-get install -y --no-install-recommends libpulse0
+        run: sudo apt-get install -y --no-install-recommends libpulse0 libzip
 
       - name: Self-test
         if: steps.cache-build.outputs.cache-hit != 'true'

@@ -1,3 +1,4 @@
+#include <cstdlib>
 #include <fstream>
 #include <ostream>
 #define DISCORDPP_IMPLEMENTATION
@@ -326,6 +327,9 @@ void httpServer() {
 
                 fs::path mainTempPath = "temp_BeatSaberBridgeAPI";
                 fs::path zipName = "download.zip";
+                fs::path mainOld = "BeatSaberBridgeAPI.old";
+                fs::path winDll = "discord_partner_sdk.old";
+
 
                 fs::create_directory(temp_path / mainTempPath);
 
@@ -335,23 +339,26 @@ void httpServer() {
                 extractZip(temp_path / mainTempPath / zipName, temp_path / mainTempPath);
 
                 for (const auto & entry : fs::directory_iterator(temp_path / mainTempPath)) {
-                    if (entry != zipName) {
+                    if (entry != temp_path / mainTempPath / zipName) {
                         std::cout << entry << std::endl;
-                        try {
-                            #ifdef _WIN32
-                                fs::rename(current_path / entry.path().filename(), current_path / entry.path().filename().replace_extension(".old"));
-                            #else
-                                fs::remove(entry.path().filename());
-                            #endif
+
+                        #ifdef _WIN32
+                            for (const auto & filePath : fs::directory_iterator(current_path)) {
+                                if (filePath.path().filename() == current_path / mainOld || filePath.path().filename() == current_path / winDll) {
+                                    fs::remove(filePath);
+                                }
+                            }
+                            fs::rename(current_path / entry.path().filename(), current_path / entry.path().filename().replace_extension(".old"));
+                        #else
                             fs::remove(entry.path().filename());
-                            fs::copy(entry, current_path / entry.path().filename(), fs::copy_options::overwrite_existing);
-                        } catch (const fs::filesystem_error& e) {
-                            std::cerr << "Filesystem Error: " << e.what() << '\n';
-                            std::cerr << "Error Code: " << e.code().message() << '\n';
-                        }
+                        #endif
+                        fs::remove(entry.path().filename());
+                        fs::copy(entry, current_path / entry.path().filename(), fs::copy_options::overwrite_existing);
                     }
                 }
-
+                
+                std::cout << "Update completed! This program will automatically terminate. Please run the new file. (If on Linux or MacOS, please make sure to run \"chmod +x ./BeatSaberBridgeAPI\" again.)" << std::endl;
+                std::exit(EXIT_SUCCESS);
             } else {
                 std::cerr << "Failed to download latest release" << std::endl;
             }
