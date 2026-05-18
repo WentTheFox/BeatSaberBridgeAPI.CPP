@@ -111,7 +111,7 @@ jobs:
           TEST_DIR=$(mktemp -d)
           if [ "$RUNNER_OS" = "Windows" ]; then
             cp build/Release/BeatSaberBridgeAPI.exe "$TEST_DIR/"
-            cp build/Release/discord_partner_sdk.dll "$TEST_DIR/"
+            cp build/Release/*.dll "$TEST_DIR/"
             "$TEST_DIR/BeatSaberBridgeAPI.exe" --self-test
           elif [ "$RUNNER_OS" = "macOS" ]; then
             cp build/BeatSaberBridgeAPI "$TEST_DIR/"

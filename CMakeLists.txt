@@ -60,6 +60,8 @@ endif()
 if(WIN32)
     target_compile_definitions(BeatSaberBridgeAPI.CPP PRIVATE _WIN32_WINNT=0x0A00)
     target_link_libraries(BeatSaberBridgeAPI.CPP PRIVATE ws2_32)
+elseif(APPLE)
+    target_link_libraries(BeatSaberBridgeAPI.CPP PRIVATE "-framework CoreFoundation" "-framework Security")
 endif()
 
 # Define some handy Social SDK variables
