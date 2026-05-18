@@ -27,8 +27,12 @@ else()
     set(RPATH_ORIGIN "$ORIGIN")
 endif()
 
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(LIBZIP REQUIRED libzip)
+if(WIN32)
+    find_package(libzip CONFIG REQUIRED)
+else()
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(LIBZIP REQUIRED IMPORTED_TARGET libzip)
+endif()
 
 find_package(OpenSSL REQUIRED)
 
@@ -47,8 +51,11 @@ target_link_libraries(BeatSaberBridgeAPI.CPP PRIVATE nlohmann_json::nlohmann_jso
 # Add cpp-httplib include directory
 target_include_directories(BeatSaberBridgeAPI.CPP PRIVATE ${cpp_httplib_SOURCE_DIR})
 
-target_link_libraries(BeatSaberBridgeAPI.CPP PRIVATE ${LIBZIP_LIBRARIES})
-target_include_directories(BeatSaberBridgeAPI.CPP PRIVATE ${LIBZIP_INCLUDE_DIRS})
+if(WIN32)
+    target_link_libraries(BeatSaberBridgeAPI.CPP PRIVATE libzip::zip)
+else()
+    target_link_libraries(BeatSaberBridgeAPI.CPP PRIVATE PkgConfig::LIBZIP)
+endif()
 
 if(WIN32)
     target_compile_definitions(BeatSaberBridgeAPI.CPP PRIVATE _WIN32_WINNT=0x0A00)
