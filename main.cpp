@@ -61,6 +61,8 @@ time_t pauseStartTime = 0;
 time_t totalPausedDuration = 0;
 
 int httpPort = 8080;
+bool selfTest = false;
+fs::path selfExePath;
 
 bool downloadFile(const std::string& host,
                   const std::string& path,
@@ -299,6 +301,35 @@ void httpServer() {
 
     svr.Post("/update", [](const httplib::Request& req, httplib::Response& res) {
         try {
+            if (selfTest) {
+                for (const auto& entry : fs::directory_iterator(selfExePath.parent_path())) {
+                    auto path = entry.path();
+                    auto ext = path.extension().string();
+
+                    bool shouldUpdate = false;
+                    #ifdef _WIN32
+                        shouldUpdate = (ext == ".exe" || ext == ".dll");
+                    #else
+                        shouldUpdate = (ext == ".so" || ext == ".dylib" || path == selfExePath);
+                    #endif
+
+                    if (!shouldUpdate) continue;
+
+                    fs::path oldPath = path;
+                    oldPath.replace_extension(".old");
+
+                    #ifdef _WIN32
+                        if (fs::exists(oldPath)) fs::remove(oldPath);
+                    #endif
+
+                    fs::rename(path, oldPath);
+                    fs::copy(oldPath, path);
+                }
+
+                std::cout << "Self-test passed: update file operations completed successfully\n";
+                std::exit(EXIT_SUCCESS);
+            }
+
             fs::path temp_path = fs::temp_directory_path();
             fs::path current_path = fs::current_path();
 
@@ -578,8 +609,9 @@ int main(int argc, char* argv[]) {
     SetConsoleOutputCP(CP_UTF8);
 #endif
 
+    selfExePath = fs::canonical(fs::path(argv[0]));
+
     // Parse runtime arguments
-    bool selfTest = false;
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
         if (arg == "--port" && i + 1 < argc) {
@@ -600,7 +632,20 @@ int main(int argc, char* argv[]) {
         auto client = std::make_shared<discordpp::Client>();
         discordpp::RunCallbacks();
         std::cout << "Self-test passed: Discord SDK loaded and initialized successfully\n";
-        return 0;
+
+        std::thread httpServerThread(httpServer);
+        httpServerThread.detach();
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
+        httplib::Client cli("http://localhost:" + std::to_string(httpPort));
+        auto r = cli.Post("/update");
+        if (!r) {
+            std::cerr << "Self-test failed: could not connect to local server\n";
+            return 1;
+        }
+        std::cerr << "Self-test failed: /update returned status " << r->status << "\n";
+        return 1;
     }
 
     std::signal(SIGINT, signalHandler);
