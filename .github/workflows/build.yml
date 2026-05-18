@@ -74,7 +74,7 @@ jobs:
 
       - name: Install build dependencies (macOS)
         if: runner.os == 'macOS' && steps.cache-build.outputs.cache-hit != 'true'
-        run: brew install libzip
+        run: brew install libzip openssl
 
       - name: Install build dependencies (Windows)
         if: runner.os == 'Windows' && steps.cache-build.outputs.cache-hit != 'true'
@@ -91,6 +91,8 @@ jobs:
           mkdir build && cd build
           if [ "$RUNNER_OS" = "Windows" ]; then
             cmake .. -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake
+          elif [ "$RUNNER_OS" = "macOS" ]; then
+            cmake .. -DOPENSSL_ROOT_DIR="$(brew --prefix openssl)"
           else
             cmake ..
           fi
