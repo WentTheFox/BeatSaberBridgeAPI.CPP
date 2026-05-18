@@ -68,25 +68,38 @@ jobs:
         run: |
           bash scripts/setup-sdk.sh
 
+      - name: Install build dependencies (Linux)
+        if: runner.os == 'Linux' && steps.cache-build.outputs.cache-hit != 'true'
+        run: sudo apt-get install -y --no-install-recommends libpulse0 libzip-dev
+
+      - name: Install build dependencies (macOS)
+        if: runner.os == 'macOS' && steps.cache-build.outputs.cache-hit != 'true'
+        run: brew install libzip
+
+      - name: Install build dependencies (Windows)
+        if: runner.os == 'Windows' && steps.cache-build.outputs.cache-hit != 'true'
+        run: vcpkg install libzip:x64-windows
+
       - name: Set up CMake
         if: steps.cache-build.outputs.cache-hit != 'true'
         uses: lukka/get-cmake@latest
 
       - name: Configure CMake
         if: steps.cache-build.outputs.cache-hit != 'true'
+        shell: bash
         run: |
           mkdir build && cd build
-          cmake ..
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            cmake .. -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake
+          else
+            cmake ..
+          fi
 
       - name: Build
         if: steps.cache-build.outputs.cache-hit != 'true'
         run: |
           cd build
           cmake --build . --config Release
-
-      - name: Install runtime dependencies (Linux)
-        if: runner.os == 'Linux' && steps.cache-build.outputs.cache-hit != 'true'
-        run: sudo apt-get install -y --no-install-recommends libpulse0 libzip
 
       - name: Self-test
         if: steps.cache-build.outputs.cache-hit != 'true'
