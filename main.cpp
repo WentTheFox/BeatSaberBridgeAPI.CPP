@@ -302,15 +302,29 @@ void httpServer() {
     svr.Post("/update", [](const httplib::Request& req, httplib::Response& res) {
         try {
             if (selfTest) {
-                fs::path oldPath = selfExePath;
-                oldPath.replace_extension(".old");
+                for (const auto& entry : fs::directory_iterator(selfExePath.parent_path())) {
+                    auto path = entry.path();
+                    auto ext = path.extension().string();
 
-                #ifdef _WIN32
-                    if (fs::exists(oldPath)) fs::remove(oldPath);
-                #endif
+                    bool shouldUpdate = false;
+                    #ifdef _WIN32
+                        shouldUpdate = (ext == ".exe" || ext == ".dll");
+                    #else
+                        shouldUpdate = (ext == ".so" || ext == ".dylib" || path == selfExePath);
+                    #endif
 
-                fs::rename(selfExePath, oldPath);
-                fs::copy(oldPath, selfExePath);
+                    if (!shouldUpdate) continue;
+
+                    fs::path oldPath = path;
+                    oldPath.replace_extension(".old");
+
+                    #ifdef _WIN32
+                        if (fs::exists(oldPath)) fs::remove(oldPath);
+                    #endif
+
+                    fs::rename(path, oldPath);
+                    fs::copy(oldPath, path);
+                }
 
                 std::cout << "Self-test passed: update file operations completed successfully\n";
                 std::exit(EXIT_SUCCESS);
