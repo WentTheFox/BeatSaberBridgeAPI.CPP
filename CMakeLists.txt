@@ -30,6 +30,8 @@ endif()
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(LIBZIP REQUIRED libzip)
 
+find_package(OpenSSL REQUIRED)
+
 add_executable(BeatSaberBridgeAPI.CPP main.cpp)
 
 set_target_properties(BeatSaberBridgeAPI.CPP PROPERTIES
@@ -39,7 +41,7 @@ set_target_properties(BeatSaberBridgeAPI.CPP PROPERTIES
 )
 
 # Link the external libraries
-target_link_libraries(BeatSaberBridgeAPI.CPP PRIVATE nlohmann_json::nlohmann_json ssl crypto)
+target_link_libraries(BeatSaberBridgeAPI.CPP PRIVATE nlohmann_json::nlohmann_json OpenSSL::SSL OpenSSL::Crypto)
 
 
 # Add cpp-httplib include directory
