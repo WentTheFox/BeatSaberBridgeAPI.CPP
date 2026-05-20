@@ -296,7 +296,7 @@ void httpServer() {
     httplib::Server svr;
 
     svr.Get("/version", [](const httplib::Request& req, httplib::Response& res) {
-        res.set_content(nlohmann::json({{"version", "0.1.5"}}).dump(), "application/json");
+        res.set_content(nlohmann::json({{"version", "v0.1.5"}}).dump(), "application/json");
     });
 
     svr.Post("/update", [](const httplib::Request& req, httplib::Response& res) {
